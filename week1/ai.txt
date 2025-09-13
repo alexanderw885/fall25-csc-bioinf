@@ -1,5 +1,86 @@
 AI models used:
 ChatGPT
-----------
+--------------------
 Prompts:
 
+----------
+
+in bioinformatics, I'm familiar with the N50 for contig metrics. What's the NGA50?
+
+>ChatGPT explained it poorly, I moved on to other resources
+
+----------
+
+Using Codon, the Python compiler, I'm running into an issue with dictionaries. Here's the input code, stripped down to include very little other than what's necessary to get this bug:
+```
+class DBG:
+    def __init__(self, k: int, data_list):
+
+        self.k = k
+        self.kmer_count = 0
+        self.kmer2idx = {}
+        
+        self._build(data_list)
+    def _build(self, data_list):
+        for data in data_list:
+            for original in data:
+                for i in range(len(original) - self.k - 1):
+                    self._add_arc(original[i: i + self.k], original[i + 1: i + 1 + self.k])
+                    print("exit in build")
+                    sys.exit(0)
+    def _add_node(self, kmer: str) -> int:
+        self.kmer2idx[kmer] = self.kmer_count
+        return 0 # TEMPORARY
+    def _add_arc(self, kmer1: str, kmer2: str):
+        idx1 = self._add_node(kmer1)
+```
+This code works fine in python, but not in codon. Here's the error message I'm getting:
+dict.codon:8 (9-23): error: 'NoneType' object has no attribute '__hash__'
+├─ dict.codon:323 (29-39): error: during the realization of _dict_hash(key: NoneType)
+├─ dict.codon:364 (17-53): error: during the realization of _kh_resize(self: Dict[NoneType,NoneType], new_n_buckets: int)
+├─ dict.codon:77 (18-35): error: during the realization of _kh_put(self: Dict[NoneType,NoneType], key: NoneType)
+├─ dbg.py:66 (9-46): error: during the realization of __setitem__(self: Dict[NoneType,NoneType], key: NoneType, val: NoneType)
+├─ dbg.py:71 (16-37): error: during the realization of _add_node(self: DBG[int,Dict[NoneType,NoneType],int], kmer: str)
+├─ dbg.py:60 (21-92): error: during the realization of _add_arc(self: DBG[int,Dict[NoneType,NoneType],int], kmer1: str, kmer2: str)
+├─ dbg.py:53 (9-31): error: during the realization of _build(self: DBG[int,Dict[NoneType,NoneType],int], data_list: List[List[str]])
+╰─ main.py:22 (11-54): error: during the realization of __init__(self: DBG[int,Dict[NoneType,NoneType],int], k: int, data_list: List[List[str]])
+It's clear that the dictionary assumes it's got none typing, but why is it assuming that, and how can I avoid it?
+
+> ChatGPT advised to define the types of each dict when declaring them, that worked
+
+----------
+
+1.
+I have an issue when adding a new class, a Node, to a dict. Here's the problem line:
+
+self.nodes[self.kmer_count] = Node(kmer)
+
+and here's the error:
+
+dbg.py:81 (13-53): error: 'Node[Set[NoneType],int,int,str,Optional[NoneType],bool]' does not match expected type 'Node[NoneType,NoneType,NoneType,NoneType,NoneType,NoneType]'
+
+Here's the init function for Node: 
+
+class Node:
+    def __init__(self, kmer: str):
+        self._children = set()
+        self._count: int = 0
+        self.kmer: str = kmer
+        self.visited: bool = False
+        self.depth: int = 0
+        self.max_depth_child = None
+
+Clearly the compiler expects the Node to be full of NoneTypes, but why, and how can I prevent that?
+
+> ChatGPT advised to define the type of the set, and to turn max_depth_child into an Optional[int], which did not solve the problem
+
+2. 
+I made those two changes, but there's no difference in the error
+dbg.py:82 (13-53): error: 'Node[Set[int],int,int,str,type[Optional[int]],bool]' does not match expected type 'Node[NoneType,NoneType,NoneType,NoneType,NoneType,NoneType]'
+├─ dbg.py:89 (16-37): error: during the realization of _add_node(self: DBG[int,Dict[str,int],int,Dict[int,Node[NoneType,NoneType,NoneType,NoneType,NoneType,NoneType]]], kmer: str)
+├─ dbg.py:66 (21-92): error: during the realization of _add_arc(self: DBG[int,Dict[str,int],int,Dict[int,Node[NoneType,NoneType,NoneType,NoneType,NoneType,NoneType]]], kmer1: str, kmer2: str)
+├─ dbg.py:54 (9-31): error: during the realization of _build(self: DBG[int,Dict[str,int],int,Dict[int,Node[NoneType,NoneType,NoneType,NoneType,NoneType,NoneType]]], data_list: List[List[str]])
+╰─ main.py:22 (11-54): error: during the realization of __init__(self: DBG[int,Dict[str,int],int,Dict[int,Node[NoneType,NoneType,NoneType,NoneType,NoneType,NoneType]]], k: int, data_list: List[List[str]])
+
+> ChatGPT advised to not declare class attributes in __init__, but in the body of the class, like in non-python languages. That solved the issue.
+> My broad takeaway was to declare everything's type, all variables, arguments, and return values. Don't let Codon decide for you

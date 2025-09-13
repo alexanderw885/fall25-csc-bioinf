@@ -1,8 +1,9 @@
 import copy
-from matplotlib import pyplot as plt
+from typing import Set, Optional
+# from matplotlib import pyplot as plt
 
 
-def reverse_complement(key):
+def reverse_complement(key: str) -> str:
     complement = {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G'}
 
     key = list(key[::-1])
@@ -12,37 +13,49 @@ def reverse_complement(key):
 
 
 class Node:
-    def __init__(self, kmer):
-        self._children = set()
+    _children: set[int]
+    _count: int
+    kmer: str 
+    visited: bool 
+    depth: int 
+    max_depth_child: Optional[int]
+
+    def __init__(self, kmer: str) -> None:
+        self._children= set()
         self._count = 0
         self.kmer = kmer
         self.visited = False
         self.depth = 0
         self.max_depth_child = None
 
-    def add_child(self, kmer):
+    def add_child(self, kmer: int) -> None:
         self._children.add(kmer)
 
-    def increase(self):
+    def increase(self) -> None:
         self._count += 1
 
-    def reset(self):
+    def reset(self) -> None:
         self.visited = False
         self.depth = 0
         self.max_depth_child = None
 
-    def get_count(self):
+    def get_count(self) -> int:
         return self._count
 
-    def get_children(self):
+    def get_children(self) -> list[int]:
         return list(self._children)
 
-    def remove_children(self, target):
+    def remove_children(self, target: set[int]) -> None:
         self._children = self._children - target
 
 
 class DBG:
-    def __init__(self, k, data_list):
+    k: int
+    nodes: dict[int, Node]
+    kmer2idx: dict[str, int]
+    kmer_count: int
+
+    def __init__(self, k: int, data_list) -> None:
         self.k = k
         self.nodes = {}
         # private
@@ -52,12 +65,12 @@ class DBG:
         self._check(data_list)
         self._build(data_list)
 
-    def _check(self, data_list):
+    def _check(self, data_list) -> None:
         # check data list
         assert len(data_list) > 0
         assert self.k <= len(data_list[0][0])
 
-    def _build(self, data_list):
+    def _build(self, data_list: list[list[str]]) -> None:
         for data in data_list:
             for original in data:
                 rc = reverse_complement(original)
@@ -65,17 +78,17 @@ class DBG:
                     self._add_arc(original[i: i + self.k], original[i + 1: i + 1 + self.k])
                     self._add_arc(rc[i: i + self.k], rc[i + 1: i + 1 + self.k])
 
-    def show_count_distribution(self):
-        count = [0] * 30
-        maxidx = 0
-        for idx in self.nodes:
-            c = self.nodes[idx].get_count()
-            if c >= 30: continue
-            count[c] += 1
-        plt.plot(count)
-        plt.show()
+    # def show_count_distribution(self):
+    #     count = [0] * 30
+    #     maxidx = 0
+    #     for idx in self.nodes:
+    #         c = self.nodes[idx].get_count()
+    #         if c >= 30: continue
+    #         count[c] += 1
+    #     plt.plot(count)
+    #     plt.show()
 
-    def _add_node(self, kmer):
+    def _add_node(self, kmer: str) -> int:
         if kmer not in self.kmer2idx:
             self.kmer2idx[kmer] = self.kmer_count
             self.nodes[self.kmer_count] = Node(kmer)
@@ -84,20 +97,20 @@ class DBG:
         self.nodes[idx].increase()
         return idx
 
-    def _add_arc(self, kmer1, kmer2):
+    def _add_arc(self, kmer1: str, kmer2: str) -> None:
         idx1 = self._add_node(kmer1)
         idx2 = self._add_node(kmer2)
         self.nodes[idx1].add_child(idx2)
 
-    def _get_count(self, child):
+    def _get_count(self, child: int) -> int:
         return self.nodes[child].get_count()
 
-    def _get_sorted_children(self, idx):
+    def _get_sorted_children(self, idx: int) -> list[int]:
         children = self.nodes[idx].get_children()
         children.sort(key=self._get_count, reverse=True)
         return children
 
-    def _get_depth(self, idx):
+    def _get_depth(self, idx: int) -> int:
         if not self.nodes[idx].visited:
             self.nodes[idx].visited = True
             children = self._get_sorted_children(idx)
@@ -113,27 +126,29 @@ class DBG:
         for idx in self.nodes.keys():
             self.nodes[idx].reset()
 
-    def _get_longest_path(self):
-        max_depth, max_idx = 0, None
+    def _get_longest_path(self) -> list[int]:
+        max_depth: int = 0
+        max_idx: Optional[int] = None
         for idx in self.nodes.keys():
             depth = self._get_depth(idx)
             if depth > max_depth:
-                max_depth, max_idx = depth, idx
+                max_depth = depth
+                max_idx = idx
 
         path = []
         while max_idx is not None:
-            path.append(max_idx)
-            max_idx = self.nodes[max_idx].max_depth_child
+            path.append(int(max_idx))
+            max_idx = self.nodes[int(max_idx)].max_depth_child
         return path
 
-    def _delete_path(self, path):
+    def _delete_path(self, path: list[int]):
         for idx in path:
             del self.nodes[idx]
         path_set = set(path)
         for idx in self.nodes.keys():
             self.nodes[idx].remove_children(path_set)
 
-    def _concat_path(self, path):
+    def _concat_path(self, path: list[int]) -> str:
         if len(path) < 1:
             return None
         concat = copy.copy(self.nodes[path[0]].kmer)
@@ -141,7 +156,7 @@ class DBG:
             concat += self.nodes[path[i]].kmer[-1]
         return concat
 
-    def get_longest_contig(self):
+    def get_longest_contig(self) -> str:
         # reset params in nodes for getting longest path
         self._reset()
         path = self._get_longest_path()
