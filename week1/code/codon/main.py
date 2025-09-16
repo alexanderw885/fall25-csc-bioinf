@@ -1,7 +1,6 @@
 from dbg import DBG
 from utils import read_data
 import sys
-import os
 
 
 
