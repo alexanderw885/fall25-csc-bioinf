@@ -1,4 +1,2 @@
-# test=$(codon run ./code/codon/main.py data/data1)
-# echo $test
-pwd
-ls
+test=$(codon run ./week1/code/codon/main.py data/data1)
+echo $test
