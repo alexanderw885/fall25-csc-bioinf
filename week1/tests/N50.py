@@ -3,8 +3,7 @@ import os
 import numpy as np
 
 if __name__ == "__main__":
-    argv = sys.argv
-    test = open('./' + argv[1] + "/contig.fasta", 'r')
+    test = open("./week1/data/data1/contig.fasta", 'r')
     lengths = []
     for line in test:
         if line[0] == '>':
@@ -12,16 +11,17 @@ if __name__ == "__main__":
         line.strip()
         lengths.append(len(line))
 
-    sum = (np.sum(lengths))
+    sum = (np.sum(lengths)) / 2
+    print(sum)
 
-    print("NOT CURRENTLY CALCULATING THE NGA50: CURRENTLY JUST N50")
-    nga = 0
-    for x in lengths:
-        if x < sum:
-            nga = x
+    n50 = 0
+    for x in lengths[::-1]:
+        print(str(sum) + "   " + str(x))
+        if x >= sum:
+            n50 = x
             break
         sum = sum - x
 
-    print(nga)
+    print(n50)
     
     

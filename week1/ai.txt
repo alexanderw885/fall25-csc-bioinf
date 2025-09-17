@@ -84,3 +84,16 @@ dbg.py:82 (13-53): error: 'Node[Set[int],int,int,str,type[Optional[int]],bool]' 
 
 > ChatGPT advised to not declare class attributes in __init__, but in the body of the class, like in non-python languages. That solved the issue.
 > My broad takeaway was to declare everything's type, all variables, arguments, and return values. Don't let Codon decide for you
+
+----------
+
+I want to run a bash script in which I save both the time a program took to run and the stdout of that program to different variables.
+How can I accomplish this while only running the program once?
+
+> ChatGPT gave the commands
+```
+output=$( /usr/bin/time -f "%e" -o /dev/stderr ./myprog 2>&1 )
+runtime=$(echo "$output" | tail -n1)
+stdout=$(echo "$output" | head -n -1)
+```
+> This worked, and I adopted it for my use case
