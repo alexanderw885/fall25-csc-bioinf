@@ -1,4 +1,4 @@
-set -euxo pipefail
+# set -euxo pipefail
 export PATH=${PATH}:${HOME}/.codon/bin
 ulimit -s 8192000
 
@@ -28,7 +28,7 @@ n50() {
 {
     echo "Dataset Language Runtime N50"
     echo "------- -------- ------- ---"
-    for ((i=1; i<=1; i++)); do
+    for ((i=1; i<=4; i++)); do
         output=$( /usr/bin/time -f "%e" -o /dev/stderr codon run -release ./week1/code/codon/main.py ./week1/data/data$i 2>&1 )
         runtime=$(echo "$output" | tail -n1)
         stdout=$(echo "$output" | head -n -1)
