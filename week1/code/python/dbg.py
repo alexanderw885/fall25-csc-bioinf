@@ -1,5 +1,5 @@
 import copy
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 
 
 def reverse_complement(key):
@@ -65,15 +65,15 @@ class DBG:
                     self._add_arc(original[i: i + self.k], original[i + 1: i + 1 + self.k])
                     self._add_arc(rc[i: i + self.k], rc[i + 1: i + 1 + self.k])
 
-    def show_count_distribution(self):
-        count = [0] * 30
-        maxidx = 0
-        for idx in self.nodes:
-            c = self.nodes[idx].get_count()
-            if c >= 30: continue
-            count[c] += 1
-        plt.plot(count)
-        plt.show()
+    # def show_count_distribution(self):
+    #     count = [0] * 30
+    #     maxidx = 0
+    #     for idx in self.nodes:
+    #         c = self.nodes[idx].get_count()
+    #         if c >= 30: continue
+    #         count[c] += 1
+    #     plt.plot(count)
+    #     plt.show()
 
     def _add_node(self, kmer):
         if kmer not in self.kmer2idx:
